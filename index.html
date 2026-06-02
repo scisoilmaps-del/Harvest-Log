@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>ARVA Harvest Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+
+
+
+:root {
+  --soil:   #22362C;
+  --earth:  #33483B;
+  --bark:   #526654;
+  --clay:   #A96F3C;
+  --wheat:  #D7B36A;
+  --cream:  #F8F5EC;
+  --parchment: #EFE9DA;
+  --line:   #D9D2C3;
+  --muted:  #6F766B;
+  --leaf:   #315C42;
+  --sage:   #6F8F72;
+  --moss:   #8EA77D;
+  --fog:    #F4F1E8;
+  --ink:    #1E2923;
+  --white:  #FFFFFF;
+  --warn-bg: #FFF7E8;
+  --warn-border: #D9A84E;
+  --danger: #8A3A2A;
+  --sci-earth: var(--soil);
+  --sci-clay: var(--clay);
+  --sci-leaf: var(--leaf);
+  --sci-leaf-deep: var(--soil);
+  --sci-line: var(--line);
+  --sci-soft: var(--cream);
+  --sci-muted: var(--muted);
+  --sci-ink: var(--ink);
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  background: transparent;
+  color: var(--sci-ink);
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.45;
+  font-size: 13px;
+}
+button, input, select, textarea { font: inherit; }
+button { touch-action: manipulation; }
+.page { width: 100%; max-width: 980px; margin: 0 auto; padding: 8px; overflow-x: hidden; }
+.card, .crop-card {
+  background: var(--white);
+  border: 1px solid var(--sci-line);
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 10px;
+}
+.card-title, .section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.section-title { margin-top: 12px; margin-bottom: 8px; }
+h2, h3, h4 {
+  margin: 0;
+  color: var(--sci-earth);
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 800;
+  letter-spacing: -.01em;
+}
+h2 { font-size: 17px; }
+h3 { font-size: 15px; }
+h4 { font-size: 13px; }
+.help { color: var(--sci-muted); font-size: 11px; margin-top: 2px; }
+.input-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.field { display: flex; flex-direction: column; gap: 6px; }
+label, .label {
+  color: var(--sci-muted);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+input, select, textarea {
+  width: 100%;
+  max-width: 100%;
+  min-height: 38px;
+  border: 1px solid var(--sci-line);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--sci-ink);
+  padding: 8px 10px;
+  outline: none;
+}
+
+input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 38px;
+  min-height: 38px;
+  line-height: 1.2;
+  padding: 8px 10px;
+  text-align: left;
+}
+input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+  min-height: 20px;
+  line-height: 20px;
+  padding: 0;
+  margin: 0;
+}
+input[type="date"]::-webkit-calendar-picker-indicator {
+  margin-left: auto;
+  padding: 0;
+  opacity: .7;
+}
+textarea { min-height: 38px; resize: vertical; }
+input:focus, select:focus, textarea:focus { border-color: var(--sci-clay); box-shadow: 0 0 0 3px rgba(168,85,31,.12); }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.btn {
+  border: 0;
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: #fff;
+  background: var(--sci-leaf-deep);
+  cursor: pointer;
+  font-weight: 800;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.btn:hover { filter: brightness(.98); }
+.btn.secondary { background: var(--sci-clay); }
+.btn.ghost { background: #fff; color: var(--sci-earth); border: 1px solid var(--sci-line); }
+.btn.danger { background: #8D3B1F; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 6px;
+}
+.metric {
+  background: #fff;
+  border: 1px solid var(--sci-line);
+  border-radius: 6px;
+  padding: 8px;
+}
+.metric .label { margin-bottom: 4px; }
+.metric .value { font-size: 15px; font-weight: 850; color: var(--sci-earth); letter-spacing: -.03em; }
+.metric .small { font-size: 11px; color: var(--sci-muted); margin-top: 1px; }
+.crop-name-tile { color: var(--sci-earth); font-weight: 850; font-size: 12px; margin-bottom: 2px; }
+.crop-head {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.2fr) minmax(115px, .55fr) auto;
+  gap: 10px;
+  align-items: end;
+  padding: 12px;
+  margin: -14px -14px 10px;
+  background: var(--sci-soft);
+  border-bottom: 1px solid var(--sci-line);
+  border-radius: 14px 14px 0 0;
+}
+.crop-stats {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.stat { border: 1px solid var(--sci-line); background: #fff; border-radius: 6px; padding: 8px; }
+.stat .value { font-size: 16px; font-weight: 850; color: var(--sci-leaf-deep); }
+.table-wrap { overflow-x: auto; border-radius: 6px; border: 1px solid #EFE7D7; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 1180px; }
+th {
+  text-align: left;
+  color: var(--sci-earth);
+  background: #F4EBD9;
+  font-size: 9.5px;
+  letter-spacing: .075em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--sci-line);
+  padding: 7px;
+  white-space: nowrap;
+}
+td { border-bottom: 1px solid #EFE7D7; padding: 5px; vertical-align: middle; background: #fff; }
+tbody tr:nth-child(even) td { background: #FDFBF7; }
+td input, td select, td textarea { min-height: 32px; padding: 5px 7px; border-radius: 8px; }
+.readonly { color: var(--sci-earth); font-weight: 800; white-space: nowrap; }
+.crop-actions, .row-actions { padding-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; }
+.optional-add-actions { padding-top: 10px; margin-top: 2px; border-top: 1px solid #EFE7D7; }
+.optional-add-actions .btn { flex: 1 1 235px; }
+.optional-panel { margin-top: 8px; }
+.compact-title { margin-top: 0; padding-top: 2px; }
+.note {
+  border-left: 4px solid var(--sci-clay);
+  background: var(--warn-bg);
+  color: var(--sci-earth);
+  padding: 9px 11px;
+  border-radius: 6px;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+.subnote { color: var(--sci-muted); font-size: 11px; margin: 4px 0 8px; }
+
+.compact-summary {
+  padding: 6px 8px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+}
+.compact-summary .card-title {
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.compact-summary h2 {
+  font-size: 12px;
+  line-height: 1;
+  margin: 0;
+}
+.compact-summary .help { display: none; }
+.compact-summary .summary-grid {
+  grid-template-columns: repeat(8, minmax(70px, 1fr));
+  gap: 3px;
+}
+.compact-summary .metric {
+  padding: 3px 5px;
+  border-radius: 5px;
+  min-height: 0;
+  background: #FDFBF7;
+}
+.compact-summary .metric .label {
+  font-size: 7px;
+  line-height: 1.05;
+  letter-spacing: .06em;
+  margin-bottom: 1px;
+}
+.compact-summary .metric .value {
+  font-size: 10.5px;
+  line-height: 1.05;
+}
+.compact-summary .metric .small { display: none; }
+.compact-summary #cropNPKWrap { display: none !important; }
+.crop-pager {
+  background: var(--white);
+  border: 1px solid var(--sci-line);
+  border-radius: 8px;
+  padding: 8px;
+  margin-bottom: 10px;
+}
+.crop-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
+.crop-tab {
+  border: 1px solid var(--sci-line);
+  background: #fff;
+  color: var(--sci-earth);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 850;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.crop-tab.active { background: var(--sci-leaf-deep); color: #fff; border-color: var(--sci-leaf-deep); }
+.crop-nav { display: flex; justify-content: space-between; gap: 8px; align-items: center; margin-top: 8px; }
+.crop-page-label { color: var(--sci-muted); font-size: 11px; font-weight: 750; }
+.crop-card { display: none; }
+.crop-card.active-crop { display: block; }
+
+.hidden { display: none !important; }
+
+@media (max-width: 1100px) {
+  .card, .crop-card { padding: 10px; border-radius: 7px; }
+  .card-title, .section-title { gap: 8px; }
+  .input-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .crop-head { grid-template-columns: 1fr; margin: -10px -10px 8px; padding: 10px; border-radius: 12px 12px 0 0; }
+  .crop-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .stat { padding: 6px 7px; }
+  .stat .value { font-size: 13px; }
+  .compact-summary .summary-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+  .table-wrap { overflow: visible; border: 0; border-radius: 0; }
+  table, table[style] { min-width: 0 !important; width: 100%; border-collapse: separate; border-spacing: 0; }
+  thead { display: none; }
+  tbody { display: grid; gap: 8px; }
+  tr.product-row, tr.micro-row, tr.amendment-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    background: #FDFBF7;
+    border: 1px solid #EFE7D7;
+    border-radius: 7px;
+    padding: 9px;
+  }
+  td {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    border-bottom: 0;
+    padding: 0;
+    background: transparent !important;
+    min-width: 0;
+  }
+  td::before {
+    color: var(--sci-muted);
+    font-size: 8.5px;
+    font-weight: 850;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    content: attr(data-label);
+  }
+  td.readonly {
+    min-height: 32px;
+    justify-content: center;
+    border: 1px solid var(--sci-line);
+    border-radius: 8px;
+    background: #fff !important;
+    padding: 6px 7px;
+  }
+  td:last-child { justify-content: end; }
+  td:last-child::before { content: ''; display: none; }
+  td:last-child .btn { width: 100%; min-height: 34px; }
+  .fertilizer-table td:nth-child(15), .micro-table td:nth-child(3), .micro-table td:nth-child(7), .amendment-table td:nth-child(7) { grid-column: 1 / -1; }
+}
+@media (max-width: 560px) {
+  .page { padding: 5px; }
+  .input-grid, .summary-grid, .crop-stats { grid-template-columns: 1fr 1fr; }
+  .compact-summary .summary-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  tr.product-row, tr.micro-row, tr.amendment-row { grid-template-columns: 1fr; }
+  .card-title, .section-title { flex-direction: column; align-items: stretch; }
+  .actions, .crop-actions, .row-actions { width: 100%; }
+  .btn { width: 100%; }
+  .crop-nav { flex-direction: column; align-items: stretch; }
+  .crop-page-label { text-align: center; }
+}
+
+@media (max-width: 760px) {
+  .page { padding: 6px; }
+  .input-grid, .summary-grid, .crop-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .crop-head { grid-template-columns: 1fr 1fr; }
+  .remove-crop { grid-column: 1 / -1; justify-self: start; }
+}
+@media (max-width: 480px) {
+  .input-grid, .summary-grid, .crop-stats, .crop-head { grid-template-columns: 1fr; }
+  .card-title, .section-title { flex-direction: column; }
+}
+
+
+/* Final mobile/iframe polish */
+.card, .crop-card, .crop-pager { box-shadow: none; }
+.crop-tabs { -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+.table-wrap { max-width: 100%; overflow-x: hidden; }
+@media (max-width: 760px) {
+  .page { padding: 5px; }
+  .card, .crop-card, .crop-pager { border-radius: 7px; padding: 9px; margin-bottom: 8px; }
+  .input-grid { grid-template-columns: 1fr 1fr; gap: 7px; }
+  .compact-summary .summary-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; }
+  .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .crop-head { grid-template-columns: 1fr 1fr; gap: 7px; margin: -9px -9px 8px; padding: 9px; }
+  .remove-crop { grid-column: 1 / -1; justify-self: stretch; width: 100%; }
+  .crop-stats { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; overflow-x: auto; padding-bottom: 2px; }
+  .stat { min-width: 86px; padding: 6px; }
+  .section-title { margin-top: 10px; margin-bottom: 6px; }
+  h2 { font-size: 15px; }
+  h3 { font-size: 14px; }
+  input, select, textarea { min-height: 40px; padding: 8px 10px; font-size: 16px; }
+  input[type="date"] { height: 40px; min-height: 40px; padding: 8px 10px; }
+  input[type="date"]::-webkit-date-and-time-value { min-height: 22px; line-height: 22px; }
+  .btn { min-height: 38px; padding: 8px 10px; }
+  tr.product-row, tr.micro-row, tr.amendment-row { gap: 7px; padding: 8px; border-radius: 7px; }
+  td input, td select, td textarea { min-height: 40px; font-size: 16px; }
+  td.readonly { min-height: 40px; }
+}
+@media (max-width: 480px) {
+  .page { padding: 4px; }
+  .input-grid, .summary-grid, .crop-head { grid-template-columns: 1fr; }
+  .compact-summary .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .crop-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); overflow-x: visible; }
+  .stat { min-width: 0; }
+  .card-title, .section-title { gap: 6px; }
+  .card, .crop-card, .crop-pager { padding: 8px; }
+  .crop-head { margin: -8px -8px 8px; padding: 8px; }
+  .crop-nav { gap: 6px; }
+  .crop-tab { padding: 7px 10px; }
+}
+
+
+
+/* Tillage-tool style screen flow */
+.screen { display: none; flex-direction: column; min-height: 100vh; }
+.screen.active { display: flex; }
+.home-content { max-width: 760px; margin: 0 auto; padding: 14px 8px 18px; }
+.feature-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+.feature-item { display:flex; gap:10px; align-items:flex-start; background: var(--cream); border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+.fi-icon { width: 34px; height: 34px; display:flex; align-items:center; justify-content:center; background: var(--parchment); border-radius: 6px; }
+.fi-head { font-weight: 800; color: var(--soil); font-size: 13px; }
+.fi-sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.app-bar { background: var(--soil); color: var(--white); min-height: 50px; padding: 8px 10px; display:flex; align-items:center; gap:10px; position: sticky; top: 0; z-index: 10; }
+.app-bar-title { font-weight: 800; font-size: 15px; flex: 1; }
+.back-btn, .app-bar-action { border: 1px solid rgba(255,255,255,.22); background: rgba(255,255,255,.08); color: var(--white); border-radius: 6px; min-height: 34px; padding: 7px 10px; font-weight: 800; }
+.back-btn { width: 36px; padding: 0; }
+.step-bar { display:flex; align-items:center; justify-content:center; gap: 8px; background: var(--cream); border-bottom: 1px solid var(--line); padding: 8px; }
+.step-item { display:flex; align-items:center; gap:6px; color: var(--muted); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; }
+.step-dot { width: 9px; height:9px; border-radius: 4px; background: var(--line); }
+.step-item.active { color: var(--leaf); }
+.step-item.active .step-dot, .step-item.done .step-dot { background: var(--leaf); }
+.content { width: 100%; max-width: 980px; margin: 0 auto; padding: 10px 8px 16px; }
+.content-wide { width: 100%; max-width: 1180px; margin: 0 auto; padding: 8px 6px 16px; }
+.section-head { margin: 6px 0 10px; }
+.section-head h2 { font-family:'DM Serif Display', Georgia, serif; font-size: 24px; font-weight: 400; color: var(--soil); }
+.section-head .sub { color: var(--muted); font-size: 13px; margin-top: 3px; }
+.btn-primary, .btn-secondary, .btn-clay, .btn-ghost { border: 0; border-radius: 6px; min-height: 44px; padding: 10px 14px; font-weight: 800; }
+.btn-primary { width:100%; background: var(--leaf); color: var(--white); }
+.btn-secondary { background: var(--parchment); color: var(--soil); border: 1px solid var(--line); }
+.btn-clay { background: var(--clay); color: var(--white); }
+.btn-ghost { background: var(--cream); color: var(--leaf); border: 1px solid var(--line); }
+.btn-row { display:flex; gap: 8px; margin-top: 10px; }
+.summary-report { display:grid; gap:10px; }
+.summary-report .summary-card { background: var(--white); border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+.summary-report .summary-title { font-family:'DM Serif Display', Georgia, serif; color: var(--soil); font-size: 22px; margin-bottom: 4px; }
+.summary-report .summary-sub { color: var(--muted); font-size: 12px; margin-bottom: 10px; }
+.summary-report .mini-grid { display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.summary-report .crop-summary-row { display:grid; grid-template-columns: 1.5fr repeat(5, 1fr); gap: 6px; align-items:center; border-top: 1px solid var(--line); padding: 8px 0; font-size: 12px; }
+.summary-report .crop-summary-row.header { font-weight: 800; color: var(--soil); text-transform: uppercase; letter-spacing: .04em; font-size: 10px; border-top: 0; }
+@media (max-width: 768px) {
+  .feature-list { grid-template-columns: 1fr; }
+  .summary-report .mini-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .summary-report .crop-summary-row { grid-template-columns: 1fr 1fr; }
+  .summary-report .crop-summary-row.header { display:none; }
+}
+@media (max-width: 520px) {
+  .step-item span { display:none; }
+  .app-bar-action { font-size: 12px; padding: 7px 8px; }
+  .btn-row { flex-direction: column; }
+}
+
+
+
+/* Ultra-slim iframe summary strips */
+.compact-summary {
+  padding: 4px 6px !important;
+  margin-bottom: 6px !important;
+  border-radius: 6px !important;
+}
+.compact-summary .card-title { display: none !important; }
+.compact-summary .summary-grid {
+  display: grid !important;
+  grid-template-columns: repeat(8, minmax(0, 1fr)) !important;
+  gap: 4px !important;
+}
+.compact-summary .metric,
+.crop-stats .stat {
+  min-height: 22px !important;
+  padding: 4px 6px !important;
+  border-radius: 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+  background: #FDFBF7 !important;
+}
+.compact-summary .metric .label,
+.crop-stats .stat .label {
+  margin: 0 !important;
+  font-size: 8px !important;
+  line-height: 1 !important;
+  letter-spacing: .06em !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+.compact-summary .metric .value,
+.crop-stats .stat .value {
+  font-size: 12px !important;
+  line-height: 1 !important;
+  margin: 0 !important;
+  flex: 0 0 auto !important;
+}
+.crop-stats {
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 4px !important;
+  margin-bottom: 6px !important;
+  overflow: visible !important;
+  padding-bottom: 0 !important;
+}
+@media (max-width: 768px) {
+  .compact-summary .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .crop-stats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .compact-summary .metric,
+  .crop-stats .stat { min-height: 24px !important; }
+}
+@media (max-width: 420px) {
+  .compact-summary .metric .label,
+  .crop-stats .stat .label { font-size: 7px !important; }
+  .compact-summary .metric .value,
+  .crop-stats .stat .value { font-size: 11px !important; }
+}
+
+
+
+/* MAX-CLEAN IFRAME MODE: hide bulky calculated tiles/cards from entry view */
+.crop-stats { display: none !important; }
+.compact-summary {
+  padding: 0 !important;
+  margin: 0 0 5px 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+.compact-summary .summary-grid {
+  grid-template-columns: repeat(8, minmax(0, 1fr)) !important;
+  gap: 3px !important;
+}
+.compact-summary .metric {
+  min-height: 18px !important;
+  height: 18px !important;
+  padding: 2px 5px !important;
+  border-radius: 4px !important;
+  border-width: 1px !important;
+  background: #fff !important;
+}
+.compact-summary .metric .label { font-size: 6.5px !important; letter-spacing: .05em !important; }
+.compact-summary .metric .value { font-size: 10px !important; }
+/* Hide calculated helper outputs in the working entry table. User-facing N-P-K totals remain editable inputs. */
+.fertilizer-table .calc-output {
+  display: none !important;
+}
+@media (max-width: 1100px) {
+  tr.product-row, tr.micro-row, tr.amendment-row {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 5px !important;
+    padding: 6px !important;
+    border-radius: 5px !important;
+  }
+  td { gap: 2px !important; }
+  td::before { font-size: 7px !important; letter-spacing: .05em !important; }
+  td input, td select, td textarea,
+  input, select, textarea {
+    min-height: 30px !important;
+    height: 30px !important;
+    padding: 4px 7px !important;
+    font-size: 14px !important;
+    border-radius: 6px !important;
+  }
+  td:last-child .btn { min-height: 30px !important; }
+  .fertilizer-table td:nth-child(15), .micro-table td:nth-child(3), .micro-table td:nth-child(7), .amendment-table td:nth-child(7) { grid-column: auto !important; }
+}
+@media (max-width: 760px) {
+  .compact-summary .summary-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+  tr.product-row, tr.micro-row, tr.amendment-row { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+@media (max-width: 420px) {
+  .compact-summary .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  tr.product-row, tr.micro-row, tr.amendment-row { grid-template-columns: 1fr !important; }
+}
+
+
+
+/* Fertility tool QA/QC + compact same-style cleanup */
+.qa-box {
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--clay);
+  background: #FFF8EA;
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin: 8px 0;
+  color: var(--soil);
+  font-size: 12px;
+  font-weight: 700;
+}
+#screen-setup .input-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+#screen-setup .field:first-child { grid-column: 1 / -1; }
+.crop-stats, .compact-summary .summary-grid, #cropNPKWrap { display: none !important; }
+.compact-summary { padding: 0 !important; margin: 0 0 6px 0 !important; border: 0 !important; background: transparent !important; }
+.card, .crop-card, .crop-pager { border-radius: 8px !important; }
+.crop-head { padding: 8px !important; margin: -10px -10px 8px !important; gap: 8px !important; }
+.section-title { margin-top: 7px !important; margin-bottom: 5px !important; }
+.section-title h3 { font-size: 13px !important; }
+.section-title .help { font-size: 10.5px !important; line-height: 1.2 !important; }
+.crop-actions, .optional-add-actions { padding-top: 5px !important; gap: 6px !important; }
+.optional-add-actions { margin-top: 5px !important; }
+.table-wrap { border: 0 !important; overflow: visible !important; }
+tr.product-row, tr.micro-row, tr.amendment-row { position: relative; }
+.product-row.collapsed td:not(.entry-summary-cell),
+.micro-row.collapsed td:not(.entry-summary-cell),
+.amendment-row.collapsed td:not(.entry-summary-cell) { display: none !important; }
+.entry-summary-cell { padding: 0 !important; background: transparent !important; border: 0 !important; }
+.entry-summary {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  border: 1px solid var(--line); background: #FDFBF7; border-radius: 8px;
+  padding: 6px 8px; margin-bottom: 5px;
+}
+.entry-summary-title { font-weight: 850; color: var(--soil); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.entry-summary-sub { color: var(--muted); font-size: 10px; margin-top: 1px; }
+.entry-summary-actions .btn { min-height: 28px !important; height: 28px !important; padding: 3px 8px !important; font-size: 11px !important; width: auto !important; }
+.needs-attention .entry-summary { border-color: #B95B42; box-shadow: 0 0 0 3px rgba(185,91,66,.12); }
+@media (max-width: 1100px) {
+  tr.product-row, tr.micro-row, tr.amendment-row { grid-template-columns: repeat(4, minmax(0,1fr)) !important; gap: 5px !important; padding: 6px !important; }
+  .entry-summary-cell { grid-column: 1 / -1 !important; }
+  input, select, textarea, td input, td select, td textarea { min-height: 30px !important; height: 30px !important; padding: 4px 7px !important; font-size: 14px !important; border-radius: 6px !important; }
+  td::before { font-size: 7px !important; letter-spacing: .05em !important; }
+}
+@media (max-width: 760px) {
+  #screen-setup .input-grid { grid-template-columns: 1fr !important; }
+  tr.product-row, tr.micro-row, tr.amendment-row { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+}
+@media (max-width: 420px) {
+  tr.product-row, tr.micro-row, tr.amendment-row { grid-template-columns: 1fr !important; }
+}
+
+
+
+/* FINAL FIX: compact card rows for fertilizer entry view on desktop and phone */
+.fertilizer-table,
+.micro-table,
+.amendment-table,
+.fertilizer-table thead,
+.micro-table thead,
+.amendment-table thead {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+.fertilizer-table thead,
+.micro-table thead,
+.amendment-table thead { display: none !important; }
+.fertilizer-table tbody,
+.micro-table tbody,
+.amendment-table tbody {
+  display: grid !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
+tr.product-row,
+tr.micro-row,
+tr.amendment-row {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 7px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  padding: 8px !important;
+  margin: 0 0 8px 0 !important;
+}
+tr.product-row > td,
+tr.micro-row > td,
+tr.amendment-row > td {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  min-width: 0 !important;
+  border: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+tr.product-row > td::before,
+tr.micro-row > td::before,
+tr.amendment-row > td::before {
+  content: attr(data-label) !important;
+  color: var(--muted) !important;
+  font-size: 8.5px !important;
+  font-weight: 850 !important;
+  letter-spacing: .09em !important;
+  text-transform: uppercase !important;
+  line-height: 1.1 !important;
+}
+.entry-summary-cell {
+  grid-column: 1 / -1 !important;
+  display: block !important;
+}
+.entry-summary-cell::before,
+.calc-output::before,
+td[data-label=""]::before { display: none !important; content: '' !important; }
+.fertilizer-table .calc-output {
+  display: none !important;
+}
+.product-row td[data-label="Notes"],
+.micro-row td[data-label="What It Contains"],
+.micro-row td[data-label="Notes"],
+.amendment-row td[data-label="Notes"] {
+  grid-column: 1 / -1 !important;
+}
+td[data-label=""] { justify-content: end !important; }
+td[data-label=""] .btn {
+  width: 100% !important;
+  min-height: 32px !important;
+  padding: 4px 8px !important;
+}
+.product-row.collapsed td:not(.entry-summary-cell),
+.micro-row.collapsed td:not(.entry-summary-cell),
+.amendment-row.collapsed td:not(.entry-summary-cell) { display: none !important; }
+@media (max-width: 760px) {
+  tr.product-row,
+  tr.micro-row,
+  tr.amendment-row { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+@media (max-width: 460px) {
+  tr.product-row,
+  tr.micro-row,
+  tr.amendment-row { grid-template-columns: 1fr !important; }
+}
+
+
+
+/* FIX: Optional input units must stay visible. Entry summary cell shifts nth-child indexes, so never hide unit columns by number. */
+.micro-row td[data-label="Unit"],
+.amendment-row td[data-label="Unit"],
+.micro-row td[data-label="Total Product"],
+.amendment-row td[data-label="Total Product"] {
+  display: flex !important;
+}
+.micro-row td[data-label="Unit"] select,
+.amendment-row td[data-label="Unit"] select {
+  width: 100% !important;
+}
+.micro-row td[data-label="Total Product"],
+.amendment-row td[data-label="Total Product"] {
+  min-height: 30px !important;
+  align-self: end !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 6px !important;
+  padding: 6px 8px !important;
+  background: #FDFBF7 !important;
+  font-weight: 850 !important;
+  color: var(--soil) !important;
+}
+
+
+/* Remove optional Total Product tiles from entry view. Values still calculate/export in the background. */
+.micro-table th:nth-child(6),
+.amendment-table th:nth-child(6),
+.micro-row td[data-label="Total Product"],
+.amendment-row td[data-label="Total Product"] {
+  display: none !important;
+}
+
+
+.summary-report .optional-total-row { grid-template-columns: 1fr 1fr; }
+.summary-report .metric .value { overflow-wrap: anywhere; }
+
+
+
+
+/* Irrigation Log: same compact card-style behavior as the Fertility Plan, but cleaner for the longer ARVA irrigation input set. */
+.irrigation-table,
+.irrigation-table tbody,
+.irrigation-table tr,
+.irrigation-table td { width: 100%; }
+.irrigation-table { min-width: 0 !important; border-collapse: separate; border-spacing: 0; }
+.irrigation-table thead { display: none; }
+.irrigation-table tbody.irrigation-body { display: grid; gap: 10px; }
+.irrigation-table tr.irrigation-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  background: #FDFBF7;
+  border: 1px solid #EFE7D7;
+  border-radius: 7px;
+  padding: 9px;
+}
+.irrigation-table td {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-bottom: 0;
+  padding: 0;
+  background: transparent !important;
+  min-width: 0;
+}
+.irrigation-table td::before {
+  color: var(--sci-muted);
+  font-size: 8.5px;
+  font-weight: 850;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  content: attr(data-label);
+}
+.irrigation-table td input,
+.irrigation-table td select,
+.irrigation-table td textarea { min-height: 38px; }
+.irrigation-table td.readonly,
+.irrigation-table td.calc-output {
+  min-height: 38px;
+  justify-content: center;
+  border: 1px solid var(--sci-line);
+  border-radius: 8px;
+  background: #fff !important;
+  padding: 6px 7px;
+  color: var(--sci-earth);
+  font-weight: 850;
+}
+.irrigation-table .notes-cell { grid-column: span 2; }
+.irrigation-table td:last-child {
+  grid-column: 1 / -1;
+  align-items: flex-end;
+}
+.irrigation-table td:last-child::before { display: none; content: ''; }
+.irrigation-table td:last-child .btn { width: auto; min-height: 34px; }
+.table-wrap:has(.irrigation-table) { overflow-x: hidden !important; border: 0; border-radius: 0; }
+@media (max-width: 900px) {
+  .irrigation-table tr.irrigation-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .irrigation-table .notes-cell { grid-column: 1 / -1; }
+}
+@media (max-width: 560px) {
+  .irrigation-table tr.irrigation-row { grid-template-columns: 1fr; gap: 7px; padding: 8px; }
+  .irrigation-table td:last-child .btn { width: 100%; }
+}
+
+
+
+/* Diesel Use Log: mirrors the irrigation compact card layout. */
+.diesel-table,
+.diesel-table tbody,
+.diesel-table tr,
+.diesel-table td { width: 100%; }
+.diesel-table { min-width: 0 !important; border-collapse: separate; border-spacing: 0; }
+.diesel-table thead { display: none; }
+.diesel-table tbody.diesel-body { display: grid; gap: 10px; }
+.diesel-table tr.diesel-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  background: #FDFBF7;
+  border: 1px solid #EFE7D7;
+  border-radius: 7px;
+  padding: 9px;
+}
+.diesel-table td {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-bottom: 0;
+  padding: 0;
+  background: transparent !important;
+  min-width: 0;
+}
+.diesel-table td::before {
+  color: var(--sci-muted);
+  font-size: 8.5px;
+  font-weight: 850;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  content: attr(data-label);
+}
+.diesel-table td input,
+.diesel-table td select,
+.diesel-table td textarea { min-height: 38px; }
+.diesel-table td.readonly,
+.diesel-table td.calc-output {
+  min-height: 38px;
+  justify-content: center;
+  border: 1px solid var(--sci-line);
+  border-radius: 8px;
+  background: #fff !important;
+  padding: 6px 7px;
+  color: var(--sci-earth);
+  font-weight: 850;
+}
+.diesel-table .notes-cell { grid-column: span 2; }
+.diesel-table td:last-child { grid-column: 1 / -1; align-items: flex-end; }
+.diesel-table td:last-child::before { display: none; content: ''; }
+.diesel-table td:last-child .btn { width: auto; min-height: 34px; }
+.table-wrap:has(.diesel-table) { overflow-x: hidden !important; border: 0; border-radius: 0; }
+@media (max-width: 900px) {
+  .diesel-table tr.diesel-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .diesel-table .notes-cell { grid-column: 1 / -1; }
+}
+@media (max-width: 560px) {
+  .diesel-table tr.diesel-row { grid-template-columns: 1fr; gap: 7px; padding: 8px; }
+  .diesel-table td:last-child .btn { width: 100%; }
+}
+
+</style>
+</head>
+<body>
+
+<div class="screen active" id="screen-home">
+  <div class="home-content">
+    <div class="feature-list">
+      <div class="feature-item"><div class="fi-icon">🏡</div><div class="fi-text"><div class="fi-head">Farm Setup</div><div class="fi-sub">Name, total acres, total fields, and crop count</div></div></div>
+      <div class="feature-item"><div class="fi-icon">🌾</div><div class="fi-text"><div class="fi-head">Crop-by-Crop Entry</div><div class="fi-sub">Add harvest records per crop</div></div></div>
+      <div class="feature-item"><div class="fi-icon">⛽</div><div class="fi-text"><div class="fi-head">Instant Harvest Summary</div><div class="fi-sub">Farm totals, crop totals, and harvest units</div></div></div>
+      <div class="feature-item"><div class="fi-icon">📥</div><div class="fi-text"><div class="fi-head">Export to CSV</div><div class="fi-sub">Download a clean spreadsheet for records</div></div></div>
+    </div>
+    <button class="btn-primary" type="button" onclick="goTo('setup')" style="margin-bottom:16px;">Get Started →</button>
+  </div>
+</div>
+
+<div class="screen" id="screen-setup">
+  <div class="app-bar">
+    <button class="back-btn" type="button" onclick="goTo('home')">←</button>
+    <span class="app-bar-title">Farm Setup</span>
+  </div>
+  <div class="step-bar">
+    <div class="step-item active"><div class="step-dot"></div><span>Setup</span></div>
+    <div class="step-item"><div class="step-dot"></div><span>Crops</span></div>
+    <div class="step-item"><div class="step-dot"></div><span>Summary</span></div>
+  </div>
+  <div class="content">
+    <div class="section-head">
+      <h2>Farm details</h2>
+      <div class="sub">Enter only the basics needed to start.</div>
+    </div>
+    <div id="setupQa" class="qa-box hidden"></div>
+    <section class="card">
+      <div class="input-grid">
+        <div class="field"><label for="farmName">Farm Name</label><input id="farmName" placeholder="Example: ABC Farm" /></div>
+        <div class="field"><label for="totalAcres">Total Acres</label><input id="totalAcres" type="number" min="0" step="0.01" placeholder="0" /></div>
+        <div class="field"><label for="totalFields">Total Fields</label><input id="totalFields" type="number" min="0" step="1" placeholder="0" inputmode="numeric" /></div>
+        <div class="field"><label for="preparedBy">Prepared By</label><input id="preparedBy" placeholder="Optional" /></div>
+        <div class="field"><label for="cropCount">Number of Crops</label><input id="cropCount" type="number" min="1" max="10" step="1" placeholder="" inputmode="numeric" /></div>
+      </div>
+    </section>
+    <button class="btn-primary" type="button" onclick="goToSetupCrops()">Continue to Crops →</button>
+  </div>
+</div>
+
+<div class="screen" id="screen-crops">
+  <div class="app-bar">
+    <button class="back-btn" type="button" onclick="goTo('setup')">←</button>
+    <span class="app-bar-title" id="cropsBarTitle">Crop Inputs</span>
+    <button class="app-bar-action" type="button" onclick="goToSummary()">Summary →</button>
+  </div>
+  <div class="step-bar">
+    <div class="step-item done"><div class="step-dot"></div><span>Setup</span></div>
+    <div class="step-item active"><div class="step-dot"></div><span>Crops</span></div>
+    <div class="step-item"><div class="step-dot"></div><span>Summary</span></div>
+  </div>
+  <div class="content-wide">
+    <div id="cropQa" class="qa-box hidden"></div>
+    <section class="card compact-summary">
+      <div class="card-title">
+        <div><h2>Summary</h2><div class="help">Farm-level harvest totals based on yield per acre entered for each crop.</div></div>
+        <div class="actions"><button class="btn ghost" id="addCropBtn" type="button">Add Crop</button></div>
+      </div>
+      <div id="acreWarning" class="note hidden"></div>
+      <div class="summary-grid">
+        <div class="metric"><div class="label">Crop Acres Entered</div><div class="value" id="sumCropAcres">0.00</div><div class="small">Sum of crop acres</div></div>
+        <div class="metric"><div class="label">Remaining Acres</div><div class="value" id="remainingAcres">0.00</div><div class="small">Total acres minus crop acres</div></div>
+        <div class="metric"><div class="label">Crop Fields Entered</div><div class="value" id="sumCropFields">0</div><div class="small">Sum of crop fields</div></div>
+        <div class="metric"><div class="label">Remaining Fields</div><div class="value" id="remainingFields">0</div><div class="small">Total fields minus crop fields</div></div>
+        <div class="metric"><div class="label">Total Harvest</div><div class="value" id="farmDiesel">0</div><div class="small">Harvest units across all crops</div></div>
+        <div class="metric"><div class="label">Harvest / Acre</div><div class="value" id="farmDieselPerAcre">0.00</div><div class="small">Harvest units per crop acre</div></div>
+      </div>
+    </section>
+
+    <section class="crop-pager" id="cropPager">
+      <div class="crop-tabs" id="cropTabs"></div>
+      <div class="crop-nav">
+        <button class="btn ghost" id="prevCropBtn" type="button">Previous Crop</button>
+        <div class="crop-page-label" id="cropPageLabel">Crop 1 of 1</div>
+        <button class="btn ghost" id="nextCropBtn" type="button">Next Crop</button>
+      </div>
+    </section>
+    <main id="crops"></main>
+  </div>
+</div>
+
+<div class="screen" id="screen-summary">
+  <div class="app-bar">
+    <button class="back-btn" type="button" onclick="goTo('crops')">←</button>
+    <span class="app-bar-title">Summary Report</span>
+    <button class="app-bar-action" id="exportCsvBtn" type="button">Export CSV</button>
+  </div>
+  <div class="step-bar">
+    <div class="step-item done"><div class="step-dot"></div><span>Setup</span></div>
+    <div class="step-item done"><div class="step-dot"></div><span>Crops</span></div>
+    <div class="step-item active"><div class="step-dot"></div><span>Summary</span></div>
+  </div>
+  <div class="content">
+    <div id="summaryQa" class="qa-box hidden"></div>
+    <div id="summaryContent"></div>
+    <div class="btn-row">
+      <button class="btn-secondary" style="flex:1" type="button" onclick="goTo('crops')">← Edit Crops</button>
+      <button class="btn-clay" style="flex:1" type="button" onclick="downloadCsv()">📥 Export CSV</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+const MAX_CROPS = 10;
+let activeCropIndex = 0;
+const $ = (s, root=document) => root.querySelector(s);
+const $$ = (s, root=document) => Array.from(root.querySelectorAll(s));
+const n = v => { const x = parseFloat(v); return Number.isFinite(x) ? x : 0; };
+const f2 = v => n(v).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2});
+const esc = v => String(v ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const HARVEST_UNITS = ['bu','tons','lbs','cwt','bales','each','kg','metric tons','other'];
+
+function goTo(name){
+  $$('.screen').forEach(s => s.classList.remove('active'));
+  const screen = $('#screen-' + name);
+  if (screen) screen.classList.add('active');
+  if (name === 'crops') { updateEverything(); setTimeout(()=>showCrop(activeCropIndex), 0); }
+  if (name === 'summary') renderSummaryReport();
+}
+function showQa(id, msg){ const box = $('#' + id); if(!box) return; if(msg){box.textContent=msg; box.classList.remove('hidden');} else {box.textContent=''; box.classList.add('hidden');} }
+function validateSetup(){
+  if (!$('#farmName').value.trim()) return {ok:false,message:'Enter the farm name before continuing.',el:$('#farmName')};
+  if (n($('#totalAcres').value) <= 0) return {ok:false,message:'Enter total acres before continuing.',el:$('#totalAcres')};
+  let count = Math.round(n($('#cropCount').value));
+  if (!count || count < 1) return {ok:false,message:'Enter at least 1 crop before continuing.',el:$('#cropCount')};
+  if (count > MAX_CROPS) return {ok:false,message:'Use 10 crops or fewer.',el:$('#cropCount')};
+  return {ok:true};
+}
+function goToSetupCrops(){
+  const v = validateSetup();
+  if (!v.ok){ showQa('setupQa', v.message); v.el && v.el.focus(); return; }
+  showQa('setupQa','');
+  syncCropCount(Math.round(n($('#cropCount').value)) || 1);
+  $('#cropsBarTitle').textContent = ($('#farmName').value.trim() || 'Farm') + ' — Crop Inputs';
+  goTo('crops');
+}
+function unitOptions(){ return HARVEST_UNITS.map(u => `<option value="${esc(u)}">${esc(u)}</option>`).join(''); }
+function makeCrop(idx){
+  const el = document.createElement('section');
+  el.className = 'crop-card';
+  el.dataset.cropId = String(Date.now() + Math.random());
+  el.innerHTML = `
+    <div class="crop-head">
+      <div class="field"><label>Crop Name</label><input class="crop-name" placeholder="Corn, soybeans, rice..." /></div>
+      <div class="field"><label>Crop Acres</label><input class="crop-acres" type="number" min="0" step="0.01" placeholder="0" /></div>
+      <div class="field"><label>Crop Fields</label><input class="crop-fields" type="number" min="0" step="1" placeholder="0" inputmode="numeric" /></div>
+      <button class="btn danger remove-crop" type="button">Remove Crop</button>
+    </div>
+    <div class="crop-stats">
+      <div class="stat"><div class="label">Total Harvest</div><div class="value crop-harvest">0.00</div></div>
+      <div class="stat"><div class="label">Harvest / Acre</div><div class="value crop-harvest-acre">0.00</div></div>
+      <div class="stat"><div class="label">Harvest Entries</div><div class="value crop-entry-count">0</div></div>
+    </div>
+    <div class="section-title">
+      <div><h3>Harvest Log</h3><div class="help">Enter yield per acre and unit for this crop. Total harvest is calculated as crop acres × yield per acre, matching the uploaded harvest sheet.</div></div>
+    </div>
+    <div class="table-wrap">
+      <table class="fertilizer-table diesel-table harvest-table">
+        <thead><tr><th>Yield/ac</th><th>Unit</th><th class="calc-output">Total Harvest</th><th>Notes</th><th></th></tr></thead>
+        <tbody class="diesel-body harvest-body"></tbody>
+      </table>
+    </div>
+    <div class="crop-actions"><button class="btn ghost add-harvest" type="button">Add Harvest Entry</button></div>`;
+  $('#crops').appendChild(el);
+  addHarvestRow(el);
+  return el;
+}
+function harvestRowHtml(){
+  return `<tr class="diesel-row harvest-row">
+    <td data-label="Yield/ac"><input class="yield-acre" type="number" min="0" step="0.01" placeholder="0" /></td>
+    <td data-label="Unit"><select class="harvest-unit">${unitOptions()}</select></td>
+    <td data-label="Total Harvest" class="readonly total-harvest calc-output">0.00</td>
+    <td data-label="Notes" class="notes-cell"><input class="notes" placeholder="Optional" /></td>
+    <td data-label=""><button class="btn danger remove-harvest" type="button">×</button></td>
+  </tr>`;
+}
+function addHarvestRow(crop){
+  $('.harvest-body', crop).insertAdjacentHTML('beforeend', harvestRowHtml());
+  updateEverything();
+}
+function syncCropCount(target){
+  target = Math.max(1, Math.min(MAX_CROPS, target));
+  while ($$('.crop-card').length < target) makeCrop($$('.crop-card').length + 1);
+  while ($$('.crop-card').length > target) $$('.crop-card').at(-1).remove();
+  activeCropIndex = Math.min(activeCropIndex, target - 1);
+  updateEverything(); showCrop(activeCropIndex);
+}
+function addCrop(){ if ($$('.crop-card').length >= MAX_CROPS) return; makeCrop($$('.crop-card').length + 1); $('#cropCount').value = $$('.crop-card').length; activeCropIndex = $$('.crop-card').length - 1; updateEverything(); showCrop(activeCropIndex); }
+function showCrop(index){
+  const crops = $$('.crop-card'); if(!crops.length) return;
+  activeCropIndex = Math.max(0, Math.min(index, crops.length-1));
+  crops.forEach((c,i)=>c.classList.toggle('active-crop', i===activeCropIndex));
+  $$('.crop-tab').forEach((t,i)=>t.classList.toggle('active', i===activeCropIndex));
+  $('#cropPageLabel').textContent = `Crop ${activeCropIndex+1} of ${crops.length}`;
+  $('#prevCropBtn').disabled = activeCropIndex === 0;
+  $('#nextCropBtn').disabled = activeCropIndex === crops.length - 1;
+}
+function renderTabs(){
+  $('#cropTabs').innerHTML = $$('.crop-card').map((crop,i)=>`<button class="crop-tab ${i===activeCropIndex?'active':''}" type="button" data-index="${i}">${esc($('.crop-name',crop).value.trim() || 'Crop ' + (i+1))}</button>`).join('');
+}
+function rowCalc(row, crop){
+  const acres = n($('.crop-acres', crop).value);
+  const yieldAcre = n($('.yield-acre', row).value);
+  const total = acres * yieldAcre;
+  $('.total-harvest', row).textContent = f2(total);
+  row.dataset.totalHarvest = String(total);
+  return {totalHarvest: total};
+}
+function cropCalc(crop){
+  let total=0;
+  $$('.harvest-row', crop).forEach(row => { const c=rowCalc(row, crop); total+=c.totalHarvest; });
+  const acres = n($('.crop-acres', crop).value);
+  const perAcre = acres > 0 ? total / acres : 0;
+  const g=$('.crop-harvest',crop), pa=$('.crop-harvest-acre',crop), cnt=$('.crop-entry-count',crop);
+  if(g) g.textContent=f2(total); if(pa) pa.textContent=f2(perAcre); if(cnt) cnt.textContent=$$('.harvest-row',crop).length;
+  return {totalHarvest: total, harvestPerAcre: perAcre};
+}
+function updateEverything(){
+  let cropAcres=0, cropFields=0, totalHarvest=0;
+  $$('.crop-card').forEach(crop => { cropAcres += n($('.crop-acres', crop).value); cropFields += n($('.crop-fields', crop).value); const cc = cropCalc(crop); totalHarvest += cc.totalHarvest; });
+  const totalAcres=n($('#totalAcres').value), totalFields=n($('#totalFields').value);
+  $('#sumCropAcres').textContent=f2(cropAcres); $('#remainingAcres').textContent=f2(totalAcres-cropAcres);
+  $('#sumCropFields').textContent=Math.round(cropFields).toLocaleString(); $('#remainingFields').textContent=Math.round(totalFields-cropFields).toLocaleString();
+  $('#farmDiesel').textContent=f2(totalHarvest); $('#farmDieselPerAcre').textContent=f2(cropAcres > 0 ? totalHarvest / cropAcres : 0);
+  const warn=$('#acreWarning');
+  if(totalAcres && Math.abs(cropAcres-totalAcres)>0.01){ warn.textContent=`Crop acres entered (${f2(cropAcres)}) do not match total farm acres (${f2(totalAcres)}).`; warn.classList.remove('hidden'); } else warn.classList.add('hidden');
+  renderTabs();
+}
+function goToSummary(){ updateEverything(); goTo('summary'); }
+function renderSummaryReport(){
+  updateEverything();
+  const farm=$('#farmName').value.trim() || 'Farm'; const by=$('#preparedBy').value.trim() || 'Not specified';
+  let rows=[]; let total=0; let acresTotal=0;
+  $$('.crop-card').forEach((crop,i)=>{
+    let ct=0; $$('.harvest-row',crop).forEach(row=>{ct+=n(row.dataset.totalHarvest);}); total+=ct; acresTotal+=n($('.crop-acres',crop).value);
+    const acres=n($('.crop-acres',crop).value); const perAcre = acres > 0 ? ct / acres : 0;
+    const unit = $('.harvest-unit', crop)?.value || '';
+    rows.push(`<tr><td>${esc($('.crop-name',crop).value||'Crop '+(i+1))}</td><td>${f2(acres)}</td><td>${$$('.harvest-row',crop).length}</td><td>${f2(ct)}</td><td>${esc(unit)}</td><td>${f2(perAcre)}</td></tr>`);
+  });
+  $('#summaryContent').innerHTML = `<div class="summary-report"><div class="report-head"><div><h2>Harvest Summary</h2><div class="summary-sub">${esc(farm)} • Prepared by ${esc(by)}</div></div></div><div class="summary-grid"><div class="metric"><div class="label">Total Harvest</div><div class="value">${f2(total)}</div></div><div class="metric"><div class="label">Harvest / Acre</div><div class="value">${f2(acresTotal > 0 ? total / acresTotal : 0)}</div></div><div class="metric"><div class="label">Crop Acres Entered</div><div class="value">${$('#sumCropAcres').textContent}</div></div></div><div class="table-wrap" style="margin-top:10px"><table><thead><tr><th>Crop</th><th>Acres</th><th>Harvest Entries</th><th>Total Harvest</th><th>Unit</th><th>Harvest / Acre</th></tr></thead><tbody>${rows.join('')}</tbody></table></div></div>`;
+}
+function csvEscape(v){ const s=String(v??''); return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s; }
+function buildRows(){
+  const farm=$('#farmName').value.trim(), prepared=$('#preparedBy').value.trim(), totalAcres=$('#totalAcres').value, totalFields=$('#totalFields').value;
+  const rows=[];
+  $$('.crop-card').forEach((crop,i)=>{
+    $$('.harvest-row',crop).forEach((row,j)=>{
+      const calc=rowCalc(row, crop);
+      rows.push({
+        'Farm Name':farm,
+        'Prepared By':prepared,
+        'Total Farm Acres':totalAcres,
+        'Total Fields':totalFields,
+        'Crop #':i+1,
+        'Crop ':$('.crop-name',crop).value,
+        '# Acres':$('.crop-acres',crop).value,
+        'Crop Fields':$('.crop-fields',crop).value,
+        'Entry #':j+1,
+        'Yield/ac':$('.yield-acre',row).value,
+        'unit':$('.harvest-unit',row).value,
+        'Total Harvest ':calc.totalHarvest,
+        'Notes':$('.notes',row).value
+      });
+    });
+  });
+  return rows;
+}
+function downloadCsv(){
+  try {
+    updateEverything();
+    const rows = buildRows();
+    if(!rows.length){ alert('Add at least one harvest entry first.'); return; }
+    const headers = Object.keys(rows[0]);
+    const csv = '\ufeff' + [headers.map(csvEscape).join(','), ...rows.map(r => headers.map(h => csvEscape(r[h])).join(','))].join('\n');
+    const farm = ($('#farmName').value.trim() || 'ARVA-Harvest-Log').replace(/[^a-z0-9-_]+/gi, '-').replace(/^-|-$/g, '');
+    const filename = `${farm}-Harvest-Log.csv`;
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.download = filename;
+    let url = '';
+    try {
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+      url = URL.createObjectURL(blob);
+      a.href = url;
+    } catch(blobErr) {
+      a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+    }
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      try { document.body.removeChild(a); } catch(e) {}
+      if(url) { try { URL.revokeObjectURL(url); } catch(e) {} }
+    }, 250);
+  } catch(err) {
+    console.error('CSV export failed:', err);
+    alert('CSV export failed: ' + (err && err.message ? err.message : 'Unknown error'));
+  }
+}
+window.goTo = goTo;
+window.goToSetupCrops = goToSetupCrops;
+window.goToSummary = goToSummary;
+window.downloadCsv = downloadCsv;
+document.addEventListener('click', e=>{
+  if(e.target.id==='addCropBtn') addCrop();
+  if(e.target.id==='prevCropBtn') showCrop(activeCropIndex-1);
+  if(e.target.id==='nextCropBtn') showCrop(activeCropIndex+1);
+  if(e.target.classList.contains('crop-tab')) showCrop(Number(e.target.dataset.index));
+  if(e.target.classList.contains('add-harvest')) addHarvestRow(e.target.closest('.crop-card'));
+  if(e.target.classList.contains('remove-harvest')) { const crop=e.target.closest('.crop-card'); const row=e.target.closest('tr'); if($$('.harvest-row',crop).length>1) row.remove(); updateEverything(); }
+  if(e.target.classList.contains('remove-crop')) { const crop=e.target.closest('.crop-card'); if($$('.crop-card').length>1){ const idx=$$('.crop-card').indexOf(crop); crop.remove(); $('#cropCount').value=$$('.crop-card').length; activeCropIndex=Math.max(0,idx-1); updateEverything(); showCrop(activeCropIndex);} }
+  if(e.target.closest && e.target.closest('#exportCsvBtn')) downloadCsv();
+});
+document.addEventListener('change', updateEverything);
+document.addEventListener('input', updateEverything);
+window.addEventListener('DOMContentLoaded', () => { $('#cropCount').value='1'; makeCrop(1); showCrop(0); updateEverything(); });
+</script>
+</body>
+</html>
