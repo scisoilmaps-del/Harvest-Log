@@ -961,8 +961,10 @@ td[data-label=""] .btn {
         <div class="metric"><div class="label">Remaining Acres</div><div class="value" id="remainingAcres">0.00</div><div class="small">Total acres minus crop acres</div></div>
         <div class="metric"><div class="label">Crop Fields Entered</div><div class="value" id="sumCropFields">0</div><div class="small">Sum of crop fields</div></div>
         <div class="metric"><div class="label">Remaining Fields</div><div class="value" id="remainingFields">0</div><div class="small">Total fields minus crop fields</div></div>
-        <div class="metric"><div class="label">Total Harvest</div><div class="value" id="farmDiesel">0</div><div class="small">Harvest units across all crops</div></div>
-        <div class="metric"><div class="label">Harvest / Acre</div><div class="value" id="farmDieselPerAcre">0.00</div><div class="small">Harvest units per crop acre</div></div>
+        <div class="metric"><div class="label">Last Year Total</div><div class="value" id="farmLastYearTotal">0.00</div><div class="small">Crop acres × last year yield/ac</div></div>
+        <div class="metric"><div class="label">Projected Total</div><div class="value" id="farmProjectedTotal">0.00</div><div class="small">Crop acres × projected yield/ac</div></div>
+        <div class="metric"><div class="label">Actual Harvest Total</div><div class="value" id="farmDiesel">0</div><div class="small">Actual harvest entries across crops</div></div>
+        <div class="metric"><div class="label">Actual Harvest / Acre</div><div class="value" id="farmDieselPerAcre">0.00</div><div class="small">Actual harvest units per crop acre</div></div>
       </div>
     </section>
 
@@ -1053,7 +1055,7 @@ function makeCrop(idx){
       <div class="stat"><div class="label">Actual Harvest Entries</div><div class="value crop-entry-count">0</div></div>
     </div>
     <div class="section-title">
-      <div><h3>Harvest Log</h3><div class="help">Enter last year yield, projected yield for this year, and actual harvest entries. Totals are calculated as crop acres × yield per acre, matching the Farm Plan Builder harvest section.</div></div>
+      <div><h3>Harvest Log</h3><div class="help">Enter last year yield, projected yield for this year, and actual harvest entries. Totals are calculated as acres × yield per acre. Uses Crop Acres; for a one-crop farm, it falls back to Total Acres if Crop Acres is blank.</div></div>
       <button class="btn ghost add-harvest" type="button">Add Harvest Entry</button>
     </div>
     <div class="harvest-year-grid">
@@ -1089,13 +1091,27 @@ function addHarvestRow(crop){
   $('.harvest-body', crop).insertAdjacentHTML('beforeend', harvestRowHtml());
   updateEverything();
 }
+function acresForCropMath(crop){
+  const cropAcres = n($('.crop-acres', crop)?.value);
+  if (cropAcres > 0) return cropAcres;
+  // Helpful fallback for the common one-crop workflow: if Crop Acres is blank, use Total Farm Acres.
+  const totalAcres = n($('#totalAcres')?.value);
+  if ($$('.crop-card').length === 1 && totalAcres > 0) return totalAcres;
+  return 0;
+}
 function yearCalc(crop,key){
-  const acres = n($('.crop-acres', crop).value);
-  const yieldAcre = n($('.' + key + '-yield', crop)?.value);
+  const yieldEl = $('.' + key + '-yield', crop);
+  const acres = acresForCropMath(crop);
+  const yieldAcre = n(yieldEl && yieldEl.value);
   const total = acres * yieldAcre;
   const out = $('.' + key + '-total', crop);
-  if(out) out.textContent = f2(total);
-  return {yieldAcre, totalHarvest: total};
+  if(out) {
+    out.textContent = f2(total);
+    out.dataset.totalHarvest = String(total);
+    out.title = `${f2(acres)} acres × ${f2(yieldAcre)} yield/ac = ${f2(total)}`;
+  }
+  if(yieldEl) yieldEl.dataset.calculatedTotal = String(total);
+  return {yieldAcre, totalHarvest: total, acresUsed: acres};
 }
 function syncCropCount(target){
   target = Math.max(1, Math.min(MAX_CROPS, target));
@@ -1118,7 +1134,7 @@ function renderTabs(){
   $('#cropTabs').innerHTML = $$('.crop-card').map((crop,i)=>`<button class="crop-tab ${i===activeCropIndex?'active':''}" type="button" data-index="${i}">${esc($('.crop-name',crop).value.trim() || 'Crop ' + (i+1))}</button>`).join('');
 }
 function rowCalc(row, crop){
-  const acres = n($('.crop-acres', crop).value);
+  const acres = acresForCropMath(crop);
   const yieldAcre = n($('.yield-acre', row).value);
   const total = acres * yieldAcre;
   $('.total-harvest', row).textContent = f2(total);
@@ -1138,11 +1154,21 @@ function cropCalc(crop){
   return {totalHarvest: actualTotal, harvestPerAcre: perAcre, lastYearTotal:last.totalHarvest, projectedTotal:projected.totalHarvest};
 }
 function updateEverything(){
-  let cropAcres=0, cropFields=0, totalHarvest=0;
-  $$('.crop-card').forEach(crop => { cropAcres += n($('.crop-acres', crop).value); cropFields += n($('.crop-fields', crop).value); const cc = cropCalc(crop); totalHarvest += cc.totalHarvest; });
+  let cropAcres=0, cropFields=0, totalHarvest=0, lastYearTotal=0, projectedTotal=0;
+  $$('.crop-card').forEach(crop => {
+    cropAcres += n($('.crop-acres', crop).value);
+    cropFields += n($('.crop-fields', crop).value);
+    const cc = cropCalc(crop);
+    totalHarvest += cc.totalHarvest;
+    lastYearTotal += cc.lastYearTotal;
+    projectedTotal += cc.projectedTotal;
+  });
   const totalAcres=n($('#totalAcres').value), totalFields=n($('#totalFields').value);
   $('#sumCropAcres').textContent=f2(cropAcres); $('#remainingAcres').textContent=f2(totalAcres-cropAcres);
   $('#sumCropFields').textContent=Math.round(cropFields).toLocaleString(); $('#remainingFields').textContent=Math.round(totalFields-cropFields).toLocaleString();
+  const farmLast=$('#farmLastYearTotal'), farmProjected=$('#farmProjectedTotal');
+  if(farmLast) farmLast.textContent=f2(lastYearTotal);
+  if(farmProjected) farmProjected.textContent=f2(projectedTotal);
   $('#farmDiesel').textContent=f2(totalHarvest); $('#farmDieselPerAcre').textContent=f2(cropAcres > 0 ? totalHarvest / cropAcres : 0);
   const warn=$('#acreWarning');
   if(totalAcres && Math.abs(cropAcres-totalAcres)>0.01){ warn.textContent=`Crop acres entered (${f2(cropAcres)}) do not match total farm acres (${f2(totalAcres)}).`; warn.classList.remove('hidden'); } else warn.classList.add('hidden');
