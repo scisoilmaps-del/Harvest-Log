@@ -884,6 +884,7 @@ td[data-label=""] .btn {
 
 
 /* Harvest comparison cards: match Farm Plan Builder inputs */
+.choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:10px 0 12px}.choice{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff;cursor:pointer}.choice.selected{border-color:var(--leaf2);box-shadow:0 0 0 1px var(--leaf2)}.choice input{margin-top:3px}.choice span{display:flex;flex-direction:column;gap:3px}.choice small{color:var(--muted);line-height:1.35}.simple-harvest-card{border:1px solid var(--line);background:#fbfaf5;border-radius:14px;padding:12px;margin-top:10px}.simple-harvest-grid{display:grid;grid-template-columns:minmax(120px,.6fr) minmax(100px,.45fr) minmax(180px,1fr);gap:10px;align-items:end}.hidden-mode{display:none!important}@media(max-width:700px){.choice-grid{grid-template-columns:1fr}.simple-harvest-grid{grid-template-columns:1fr}}
 .harvest-year-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:10px 0}
 .harvest-year-card{border:1px solid var(--line);background:#fbfaf5;border-radius:14px;padding:10px}
 .harvest-year-card h4{margin:0 0 6px;color:var(--leaf2);font-size:14px}
@@ -1041,6 +1042,7 @@ function makeCrop(idx){
   const el = document.createElement('section');
   el.className = 'crop-card';
   el.dataset.cropId = String(Date.now() + Math.random());
+  el.dataset.harvestMode = 'detailed';
   el.innerHTML = `
     <div class="crop-head">
       <div class="field"><label>Crop Name</label><input class="crop-name" placeholder="Corn, soybeans, rice..." /></div>
@@ -1054,26 +1056,50 @@ function makeCrop(idx){
       <div class="stat"><div class="label">Actual Harvest Total</div><div class="value crop-harvest">0.00</div></div>
       <div class="stat"><div class="label">Actual Harvest Entries</div><div class="value crop-entry-count">0</div></div>
     </div>
-    <div class="section-title">
-      <div><h3>Harvest Log</h3><div class="help">Enter last year yield, projected yield for this year, and actual harvest entries. Totals are calculated as acres × yield per acre. Uses Crop Acres; for a one-crop farm, it falls back to Total Acres if Crop Acres is blank.</div></div>
-      <button class="btn ghost add-harvest" type="button">Add Harvest Entry</button>
+    <div class="section-title"><div><h3>Harvest Entry Method</h3><div class="help">Choose detailed harvest data or bypass it and enter one total harvest amount with units for this crop.</div></div></div>
+    <div class="choice-grid">
+      <label class="choice selected detailed-choice"><input class="harvest-mode" type="radio" name="harvest-mode-${esc(el.dataset.cropId)}" value="detailed" checked><span><strong>Detailed Harvest Data</strong><small>Last-year yield, projected yield, and actual harvest entries.</small></span></label>
+      <label class="choice simple-choice"><input class="harvest-mode" type="radio" name="harvest-mode-${esc(el.dataset.cropId)}" value="simple"><span><strong>Simple Total Harvest</strong><small>Enter only the total harvested amount and its unit.</small></span></label>
     </div>
-    <div class="harvest-year-grid">
-      ${harvestYearCardHtml('last-year','Last Year')}
-      ${harvestYearCardHtml('projected','Projected This Year')}
+    <div class="simple-harvest-card simple-harvest-section hidden-mode">
+      <div class="section-title"><div><h3>Simple Total Harvest</h3><div class="help">This bypasses all detailed harvest-data fields for this crop. Enter the farm's total harvested quantity, not yield per acre.</div></div></div>
+      <div class="simple-harvest-grid">
+        <div class="field"><label>Total Harvest</label><input class="simple-total-harvest" type="number" min="0" step="0.01" placeholder="0"></div>
+        <div class="field"><label>Units</label><select class="simple-harvest-unit">${unitOptions('bu')}</select></div>
+        <div class="field"><label>Notes <span class="small">optional</span></label><input class="simple-harvest-notes" placeholder="Optional context"></div>
+      </div>
     </div>
-    <div class="section-title">
-      <div><h3>Actual Harvest Entries</h3><div class="help">Use this section for recorded harvest results as the season progresses.</div></div>
-    </div>
-    <div class="table-wrap">
-      <table class="fertilizer-table diesel-table harvest-table">
-        <thead><tr><th>Yield/ac</th><th>Unit</th><th class="calc-output">Total Harvest</th><th>Notes</th><th></th></tr></thead>
-        <tbody class="diesel-body harvest-body"></tbody>
-      </table>
+    <div class="detailed-harvest-section">
+      <div class="section-title">
+        <div><h3>Harvest Log</h3><div class="help">Enter last year yield, projected yield for this year, and actual harvest entries. Totals are calculated as crop acres × yield per acre.</div></div>
+        <button class="btn ghost add-harvest" type="button">Add Harvest Entry</button>
+      </div>
+      <div class="harvest-year-grid">
+        ${harvestYearCardHtml('last-year','Last Year')}
+        ${harvestYearCardHtml('projected','Projected This Year')}
+      </div>
+      <div class="section-title">
+        <div><h3>Actual Harvest Entries</h3><div class="help">Use this section for recorded harvest results as the season progresses.</div></div>
+      </div>
+      <div class="table-wrap">
+        <table class="fertilizer-table diesel-table harvest-table">
+          <thead><tr><th>Yield/ac</th><th>Unit</th><th class="calc-output">Total Harvest</th><th>Notes</th><th></th></tr></thead>
+          <tbody class="diesel-body harvest-body"></tbody>
+        </table>
+      </div>
     </div>`;
   $('#crops').appendChild(el);
   addHarvestRow(el);
   return el;
+}
+function setHarvestMode(crop, mode){
+  mode = mode === 'simple' ? 'simple' : 'detailed';
+  crop.dataset.harvestMode = mode;
+  $('.detailed-harvest-section', crop)?.classList.toggle('hidden-mode', mode === 'simple');
+  $('.simple-harvest-section', crop)?.classList.toggle('hidden-mode', mode !== 'simple');
+  $('.detailed-choice', crop)?.classList.toggle('selected', mode === 'detailed');
+  $('.simple-choice', crop)?.classList.toggle('selected', mode === 'simple');
+  updateEverything();
 }
 function harvestYearCardHtml(key,title){
   return `<div class="harvest-year-card" data-harvest-year-card="${esc(key)}"><h4>${esc(title)}</h4><div class="harvest-year-fields"><div class="field"><label>Yield/ac</label><input class="${esc(key)}-yield yield-acre-year" type="number" min="0" step="0.01" placeholder="0" /></div><div class="field"><label>Unit</label><select class="${esc(key)}-unit harvest-unit-year">${unitOptions('bu')}</select></div><div class="field"><label>Total Harvest</label><div class="harvest-year-total ${esc(key)}-total">0.00</div></div><div class="field"><label>Notes</label><input class="${esc(key)}-notes notes-year" placeholder="Optional" /></div></div></div>`;
@@ -1142,16 +1168,24 @@ function rowCalc(row, crop){
   return {totalHarvest: total};
 }
 function cropCalc(crop){
-  let actualTotal=0;
-  $$('.harvest-row', crop).forEach(row => { const c=rowCalc(row, crop); actualTotal+=c.totalHarvest; });
-  const last = yearCalc(crop,'last-year');
-  const projected = yearCalc(crop,'projected');
+  const mode = crop.dataset.harvestMode === 'simple' ? 'simple' : 'detailed';
+  let actualTotal=0, lastTotal=0, projectedTotal=0, entryCount=0;
+  if(mode === 'simple'){
+    actualTotal = n($('.simple-total-harvest', crop)?.value);
+  } else {
+    $$('.harvest-row', crop).forEach(row => { const c=rowCalc(row, crop); actualTotal+=c.totalHarvest; });
+    const last = yearCalc(crop,'last-year');
+    const projected = yearCalc(crop,'projected');
+    lastTotal = last.totalHarvest;
+    projectedTotal = projected.totalHarvest;
+    entryCount = $$('.harvest-row',crop).length;
+  }
   const acres = n($('.crop-acres', crop).value);
   const perAcre = acres > 0 ? actualTotal / acres : 0;
   const g=$('.crop-harvest',crop), cnt=$('.crop-entry-count',crop), ly=$('.crop-last-year-total',crop), pr=$('.crop-projected-total',crop);
-  if(g) g.textContent=f2(actualTotal); if(cnt) cnt.textContent=$$('.harvest-row',crop).length;
-  if(ly) ly.textContent=f2(last.totalHarvest); if(pr) pr.textContent=f2(projected.totalHarvest);
-  return {totalHarvest: actualTotal, harvestPerAcre: perAcre, lastYearTotal:last.totalHarvest, projectedTotal:projected.totalHarvest};
+  if(g) g.textContent=f2(actualTotal); if(cnt) cnt.textContent=mode === 'simple' ? '1' : entryCount;
+  if(ly) ly.textContent=mode === 'simple' ? '—' : f2(lastTotal); if(pr) pr.textContent=mode === 'simple' ? '—' : f2(projectedTotal);
+  return {mode, totalHarvest: actualTotal, harvestPerAcre: perAcre, lastYearTotal:lastTotal, projectedTotal:projectedTotal, entryCount:mode === 'simple' ? 1 : entryCount};
 }
 function updateEverything(){
   let cropAcres=0, cropFields=0, totalHarvest=0, lastYearTotal=0, projectedTotal=0;
@@ -1183,15 +1217,17 @@ function renderSummaryReport(){
     const calc = cropCalc(crop);
     actualTotal += calc.totalHarvest; lastTotal += calc.lastYearTotal; projectedTotal += calc.projectedTotal; acresTotal += n($('.crop-acres',crop).value);
     const acres=n($('.crop-acres',crop).value);
-    rows.push(`<tr><td>${esc($('.crop-name',crop).value||'Crop '+(i+1))}</td><td>${f2(acres)}</td><td>${f2(calc.lastYearTotal)}</td><td>${esc($('.last-year-unit',crop)?.value || '')}</td><td>${f2(calc.projectedTotal)}</td><td>${esc($('.projected-unit',crop)?.value || '')}</td><td>${f2(calc.totalHarvest)}</td><td>${$$('.harvest-row',crop).length}</td></tr>`);
+    const method = calc.mode === 'simple' ? 'Simple Total Harvest' : 'Detailed Harvest Data';
+    const unit = calc.mode === 'simple' ? ($('.simple-harvest-unit',crop)?.value || '') : ($('.last-year-unit',crop)?.value || '');
+    rows.push(`<tr><td>${esc($('.crop-name',crop).value||'Crop '+(i+1))}</td><td>${f2(acres)}</td><td>${esc(method)}</td><td>${calc.mode==='simple'?'—':f2(calc.lastYearTotal)}</td><td>${calc.mode==='simple'?'—':esc($('.last-year-unit',crop)?.value || '')}</td><td>${calc.mode==='simple'?'—':f2(calc.projectedTotal)}</td><td>${calc.mode==='simple'?'—':esc($('.projected-unit',crop)?.value || '')}</td><td>${f2(calc.totalHarvest)}</td><td>${esc(calc.mode==='simple' ? ($('.simple-harvest-unit',crop)?.value || '') : 'Mixed / entry units')}</td><td>${calc.entryCount}</td></tr>`);
   });
-  $('#summaryContent').innerHTML = `<div class="summary-report"><div class="report-head"><div><h2>Harvest Summary</h2><div class="summary-sub">${esc(farm)} • Prepared by ${esc(by)}</div></div></div><div class="summary-grid"><div class="metric"><div class="label">Last Year Total</div><div class="value">${f2(lastTotal)}</div></div><div class="metric"><div class="label">Projected This Year</div><div class="value">${f2(projectedTotal)}</div></div><div class="metric"><div class="label">Actual Harvest Total</div><div class="value">${f2(actualTotal)}</div></div><div class="metric"><div class="label">Crop Acres Entered</div><div class="value">${$('#sumCropAcres').textContent}</div></div></div><div class="table-wrap" style="margin-top:10px"><table><thead><tr><th>Crop</th><th>Acres</th><th>Last Year Total</th><th>Last Year Unit</th><th>Projected Total</th><th>Projected Unit</th><th>Actual Total</th><th>Actual Entries</th></tr></thead><tbody>${rows.join('')}</tbody></table></div></div>`;
+  $('#summaryContent').innerHTML = `<div class="summary-report"><div class="report-head"><div><h2>Harvest Summary</h2><div class="summary-sub">${esc(farm)} • Prepared by ${esc(by)}</div></div></div><div class="summary-grid"><div class="metric"><div class="label">Last Year Total</div><div class="value">${f2(lastTotal)}</div></div><div class="metric"><div class="label">Projected This Year</div><div class="value">${f2(projectedTotal)}</div></div><div class="metric"><div class="label">Actual Harvest Total</div><div class="value">${f2(actualTotal)}</div></div><div class="metric"><div class="label">Crop Acres Entered</div><div class="value">${$('#sumCropAcres').textContent}</div></div></div><div class="table-wrap" style="margin-top:10px"><table><thead><tr><th>Crop</th><th>Acres</th><th>Entry Method</th><th>Last Year Total</th><th>Last Year Unit</th><th>Projected Total</th><th>Projected Unit</th><th>Actual Total</th><th>Actual Unit</th><th>Entries</th></tr></thead><tbody>${rows.join('')}</tbody></table></div></div>`;
 }
 function csvEscape(v){ const s=String(v??''); return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s; }
 function buildRows(){
   const farm=$('#farmName').value.trim(), prepared=$('#preparedBy').value.trim(), totalAcres=$('#totalAcres').value, totalFields=$('#totalFields').value;
   const rows=[];
-  const addPeriodRow=(crop,i,period,yieldAcre,unit,totalHarvest,notes,entryNo='')=>{
+  const addPeriodRow=(crop,i,method,period,yieldAcre,unit,totalHarvest,notes,entryNo='')=>{
     rows.push({
       'Farm Name':farm,
       'Prepared By':prepared,
@@ -1202,27 +1238,39 @@ function buildRows(){
       'Crop ':$('.crop-name',crop).value,
       '# Acres':$('.crop-acres',crop).value,
       'Crop Fields':$('.crop-fields',crop).value,
+      'harvestEntryMode':method,
+      'Harvest Entry Mode':method,
       'harvestPeriod':period,
       'Entry #':entryNo,
       'yieldAcre':yieldAcre,
       'Yield/ac':yieldAcre,
       'unit':unit,
+      'Harvest Unit':unit,
       'totalHarvest':totalHarvest,
+      'Total Harvest':totalHarvest,
       'Total Harvest ':totalHarvest,
       'Notes':notes
     });
   };
   $$('.crop-card').forEach((crop,i)=>{
+    const mode = crop.dataset.harvestMode === 'simple' ? 'simple' : 'detailed';
+    if(mode === 'simple'){
+      const total=$('.simple-total-harvest',crop)?.value || '';
+      const unit=$('.simple-harvest-unit',crop)?.value || 'bu';
+      const notes=$('.simple-harvest-notes',crop)?.value || '';
+      addPeriodRow(crop,i,'Simple Total Harvest','Simple Total Harvest','',unit,total,notes,'');
+      return;
+    }
     const acres=n($('.crop-acres',crop).value);
     const lastYield=$('.last-year-yield',crop)?.value || '';
     const lastTotal=acres*n(lastYield);
-    addPeriodRow(crop,i,'Last Year',lastYield,$('.last-year-unit',crop)?.value || 'bu',lastTotal,$('.last-year-notes',crop)?.value || '');
+    addPeriodRow(crop,i,'Detailed Harvest Data','Last Year',lastYield,$('.last-year-unit',crop)?.value || 'bu',lastTotal,$('.last-year-notes',crop)?.value || '');
     const projectedYield=$('.projected-yield',crop)?.value || '';
     const projectedTotal=acres*n(projectedYield);
-    addPeriodRow(crop,i,'Projected This Year',projectedYield,$('.projected-unit',crop)?.value || 'bu',projectedTotal,$('.projected-notes',crop)?.value || '');
+    addPeriodRow(crop,i,'Detailed Harvest Data','Projected This Year',projectedYield,$('.projected-unit',crop)?.value || 'bu',projectedTotal,$('.projected-notes',crop)?.value || '');
     $$('.harvest-row',crop).forEach((row,j)=>{
       const calc=rowCalc(row, crop);
-      addPeriodRow(crop,i,'Actual Harvest Entry',$('.yield-acre',row).value,$('.harvest-unit',row).value,calc.totalHarvest,$('.notes',row).value,j+1);
+      addPeriodRow(crop,i,'Detailed Harvest Data','Actual Harvest Entry',$('.yield-acre',row).value,$('.harvest-unit',row).value,calc.totalHarvest,$('.notes',row).value,j+1);
     });
   });
   return rows;
@@ -1268,6 +1316,7 @@ document.addEventListener('click', e=>{
   if(e.target.id==='nextCropBtn') showCrop(activeCropIndex+1);
   if(e.target.classList.contains('crop-tab')) showCrop(Number(e.target.dataset.index));
   if(e.target.classList.contains('add-harvest')) addHarvestRow(e.target.closest('.crop-card'));
+  if(e.target.classList.contains('harvest-mode')) setHarvestMode(e.target.closest('.crop-card'), e.target.value);
   if(e.target.classList.contains('remove-harvest')) { const crop=e.target.closest('.crop-card'); const row=e.target.closest('tr'); if($$('.harvest-row',crop).length>1) row.remove(); updateEverything(); }
   if(e.target.classList.contains('remove-crop')) { const crop=e.target.closest('.crop-card'); if($$('.crop-card').length>1){ const idx=$$('.crop-card').indexOf(crop); crop.remove(); $('#cropCount').value=$$('.crop-card').length; activeCropIndex=Math.max(0,idx-1); updateEverything(); showCrop(activeCropIndex);} }
   if(e.target.closest && e.target.closest('#exportCsvBtn')) downloadCsv();
